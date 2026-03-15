@@ -6,176 +6,264 @@
   <title>decloud</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .container { width: 100%; max-width: 420px; padding: 24px; }
-    .logo { text-align: center; margin-bottom: 32px; }
-    .logo h1 { font-size: 2.5rem; color: #4f8ef7; font-weight: 800; letter-spacing: -1px; }
-    .logo p { color: #666; margin-top: 6px; font-size: 0.9rem; }
-    .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 28px; }
-    .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
-    .tab { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
-    .tab.active { background: #4f8ef7; color: white; }
-    .tab.inactive { background: #222; color: #666; }
-    .form-group { margin-bottom: 16px; }
-    label { display: block; margin-bottom: 6px; font-size: 0.82rem; color: #666; letter-spacing: 0.3px; }
-    input { width: 100%; padding: 12px 14px; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; color: #e0e0e0; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
-    input:focus { border-color: #4f8ef7; }
-    .btn { width: 100%; padding: 13px; background: #4f8ef7; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
-    .btn:hover { background: #3a7de8; }
-    .btn:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
-    .msg { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.85rem; }
-    .msg.error { background: #2d1414; border: 1px solid #5a2020; color: #f87171; }
-    .msg.success { background: #142d14; border: 1px solid #205a20; color: #4ade80; }
-    .hidden { display: none; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; }
+
+    /* No-link screen */
+    .nolink { display: flex; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 24px; }
+    .nolink h1 { font-size: 2rem; color: #4f8ef7; font-weight: 800; margin-bottom: 10px; }
+    .nolink p { color: #555; font-size: 0.95rem; line-height: 1.6; }
+
+    /* Topbar */
+    .topbar { background: #141414; border-bottom: 1px solid #222; padding: 0 24px; height: 56px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; }
+    .topbar-logo { font-size: 1.3rem; color: #4f8ef7; font-weight: 800; }
+    .refresh-btn { padding: 6px 14px; background: transparent; border: 1px solid #2a2a2a; color: #888; border-radius: 6px; cursor: pointer; font-size: 0.82rem; transition: all 0.2s; }
+    .refresh-btn:hover { border-color: #4f8ef7; color: #4f8ef7; }
+
+    /* Main */
+    .main { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+
+    /* Upload zone */
+    .upload-zone { border: 2px dashed #2a2a2a; border-radius: 14px; padding: 40px 24px; text-align: center; cursor: pointer; transition: all 0.2s; margin-bottom: 32px; background: #141414; }
+    .upload-zone:hover, .upload-zone.drag { border-color: #4f8ef7; background: #141e30; }
+    .upload-zone h3 { font-size: 1rem; margin-bottom: 6px; color: #ccc; }
+    .upload-zone p { color: #555; font-size: 0.85rem; }
+    .upload-pick-btn { display: inline-block; margin-top: 14px; padding: 9px 22px; background: #4f8ef7; color: white; border-radius: 8px; font-size: 0.9rem; font-weight: 600; border: none; cursor: pointer; }
+    .upload-pick-btn:hover { background: #3a7de8; }
+    #fileInput { display: none; }
+    .upload-progress { margin-top: 14px; display: none; }
+    .progress-bar { width: 100%; height: 5px; background: #222; border-radius: 3px; overflow: hidden; }
+    .progress-inner { height: 100%; background: #4f8ef7; border-radius: 3px; width: 0%; transition: width 0.3s; }
+    .upload-status { margin-top: 8px; font-size: 0.82rem; color: #666; }
+
+    /* File list */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-title { font-size: 0.8rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.8px; }
+    .file-count { font-size: 0.8rem; color: #444; }
+    .file-list { display: flex; flex-direction: column; gap: 8px; }
+    .file-card { background: #141414; border: 1px solid #1e1e1e; border-radius: 10px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; transition: border-color 0.15s; }
+    .file-card:hover { border-color: #2a2a2a; }
+    .file-icon { font-size: 1.6rem; min-width: 32px; text-align: center; }
+    .file-info { flex: 1; min-width: 0; }
+    .file-name { font-size: 0.92rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { font-size: 0.78rem; color: #555; margin-top: 3px; }
+    .file-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .del-btn { padding: 5px 12px; background: transparent; border: 1px solid #2a2a2a; color: #666; border-radius: 6px; font-size: 0.78rem; cursor: pointer; transition: all 0.2s; }
+    .del-btn:hover { border-color: #f87171; color: #f87171; background: #1a0a0a; }
+
+    /* Empty / loading */
+    .empty { text-align: center; padding: 60px 20px; color: #444; }
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; }
+    .empty p { font-size: 0.9rem; }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 18px; border-radius: 10px; font-size: 0.88rem; font-weight: 500; opacity: 0; transform: translateY(10px); transition: all 0.3s; pointer-events: none; z-index: 100; }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: #142d14; border: 1px solid #205a20; color: #4ade80; }
+    .toast.error { background: #2d1414; border: 1px solid #5a2020; color: #f87171; }
   </style>
 </head>
 <body>
-<div class="container">
-  <div class="logo">
+
+<div id="nolinkScreen" class="nolink" style="display:none">
+  <div>
     <h1>☁️ decloud</h1>
-    <p>Your personal Telegram cloud storage</p>
-  </div>
-  <div class="card">
-    <div class="tabs">
-      <button class="tab active" onclick="showTab('login')">Login</button>
-      <button class="tab inactive" onclick="showTab('register')">Register</button>
-    </div>
-
-    <div id="msgBox" class="hidden"></div>
-
-    <!-- Login Form -->
-    <div id="loginForm">
-      <div class="form-group">
-        <label>Username</label>
-        <input id="loginUser" type="text" placeholder="your username" autocomplete="username" />
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input id="loginPass" type="password" placeholder="your password" autocomplete="current-password" />
-      </div>
-      <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
-    </div>
-
-    <!-- Register Form -->
-    <div id="registerForm" class="hidden">
-      <div class="form-group">
-        <label>Username</label>
-        <input id="regUser" type="text" placeholder="choose a username" autocomplete="username" />
-      </div>
-      <div class="form-group">
-        <label>Password</label>
-        <input id="regPass" type="password" placeholder="at least 6 characters" autocomplete="new-password" />
-      </div>
-      <div class="form-group">
-        <label>Confirm Password</label>
-        <input id="regPass2" type="password" placeholder="repeat password" autocomplete="new-password" />
-      </div>
-      <button class="btn" id="registerBtn" onclick="doRegister()">Create Account</button>
-    </div>
+    <p>To access your dashboard, open the link<br>sent to you by the decloud Telegram bot.<br><br>Just send <b>/start</b> to the bot to get your link.</p>
   </div>
 </div>
 
+<div id="app" style="display:none">
+  <div class="topbar">
+    <div class="topbar-logo">☁️ decloud</div>
+    <button class="refresh-btn" onclick="loadFiles()">↻ Refresh</button>
+  </div>
+
+  <div class="main">
+    <div class="upload-zone" id="dropZone"
+      onclick="document.getElementById('fileInput').click()"
+      ondragover="onDrag(event, true)"
+      ondragleave="onDrag(event, false)"
+      ondrop="onDrop(event)">
+      <h3>📤 Upload Files</h3>
+      <p>Click or drag & drop files here</p>
+      <button class="upload-pick-btn" onclick="event.stopPropagation(); document.getElementById('fileInput').click()">Choose Files</button>
+      <input type="file" id="fileInput" multiple onchange="uploadFiles(this.files)" />
+      <div class="upload-progress" id="uploadProgress">
+        <div class="progress-bar"><div class="progress-inner" id="progressInner"></div></div>
+        <div class="upload-status" id="uploadStatus"></div>
+      </div>
+    </div>
+
+    <div class="section-header">
+      <span class="section-title">Your Files</span>
+      <span class="file-count" id="fileCount"></span>
+    </div>
+    <div id="fileList"><div class="empty"><div class="empty-icon">⏳</div><p>Loading...</p></div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-  // ============================================================
-  // CONFIG — paste your TBL webhook URLs here after setup
-  // ============================================================
-  const API_LOGIN    = "https://prod-api.telebothost.com/ownlang/webhook/30705676?command=web_login&sig=d588956d4d96d737e46ec1a586b621ac29a2361c3f86b829fec695cfb5bbec8c"
-  const API_REGISTER = "https://prod-api.telebothost.com/ownlang/webhook/30705676?command=web_register&sig=bde3774510461ada2c84cdf0175b31053912cfe237fff220449f9fc6b37d13d0"
-  // ============================================================
+  // Read API URLs from query params (set by the bot in /start)
+  const params = new URLSearchParams(window.location.search)
+  const API_FILES  = params.get('files')
+  const API_UPLOAD = params.get('upload')
+  const API_DELETE = params.get('del')
 
-  // Redirect if already logged in
-  if (localStorage.getItem("dc_token")) {
-    window.location.href = "dashboard.html"
+  // Show no-link screen if URLs are missing
+  if (!API_FILES || !API_UPLOAD || !API_DELETE) {
+    document.getElementById('nolinkScreen').style.display = 'flex'
+  } else {
+    document.getElementById('app').style.display = 'block'
+    loadFiles()
   }
 
-  function showTab(tab) {
-    const isLogin = tab === 'login'
-    document.getElementById('loginForm').classList.toggle('hidden', !isLogin)
-    document.getElementById('registerForm').classList.toggle('hidden', isLogin)
-    document.querySelectorAll('.tab').forEach((t, i) => {
-      t.className = 'tab ' + ((isLogin && i === 0) || (!isLogin && i === 1) ? 'active' : 'inactive')
-    })
-    hideMsg()
+  let files = []
+
+  function getIcon(name) {
+    const ext = (name.split('.').pop() || '').toLowerCase()
+    if (['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) return '🖼️'
+    if (['mp4','mov','avi','mkv','webm'].includes(ext)) return '🎬'
+    if (['mp3','ogg','wav','flac','aac'].includes(ext)) return '🎵'
+    if (ext === 'pdf') return '📄'
+    if (['zip','rar','7z','tar','gz'].includes(ext)) return '🗜️'
+    if (['doc','docx'].includes(ext)) return '📝'
+    if (['xls','xlsx','csv'].includes(ext)) return '📊'
+    if (['js','ts','py','html','css','json','sh','cpp','c','java'].includes(ext)) return '💻'
+    return '📁'
   }
 
-  function showMsg(type, text) {
-    const box = document.getElementById('msgBox')
-    box.className = 'msg ' + type
-    box.textContent = text
+  function formatBytes(b) {
+    b = parseInt(b) || 0
+    if (b === 0) return '—'
+    if (b < 1024) return b + ' B'
+    if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB'
+    return (b / (1024 * 1024)).toFixed(2) + ' MB'
   }
 
-  function hideMsg() {
-    document.getElementById('msgBox').className = 'hidden'
+  function formatDate(ts) {
+    return new Date(ts).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
   }
 
-  function setLoading(btnId, loading) {
-    const btn = document.getElementById(btnId)
-    btn.disabled = loading
-    btn.textContent = loading ? 'Please wait...' : (btnId === 'loginBtn' ? 'Login' : 'Create Account')
+  function renderFiles() {
+    const list = document.getElementById('fileList')
+    document.getElementById('fileCount').textContent = files.length + ' file' + (files.length !== 1 ? 's' : '')
+    if (!files.length) {
+      list.innerHTML = '<div class="empty"><div class="empty-icon">📭</div><p>No files uploaded yet</p></div>'
+      return
+    }
+    const sorted = files.slice().sort((a, b) => b.uploaded_at - a.uploaded_at)
+    list.innerHTML = sorted.map(f => `
+      <div class="file-card" id="fc-${f.file_id}">
+        <div class="file-icon">${getIcon(f.name)}</div>
+        <div class="file-info">
+          <div class="file-name" title="${f.name}">${f.name}</div>
+          <div class="file-meta">${formatBytes(f.size)} &middot; ${formatDate(f.uploaded_at)}</div>
+        </div>
+        <div class="file-actions">
+          <button class="del-btn" onclick="deleteFile('${f.file_id}', '${f.name.replace(/'/g, "\\'")}')">Delete</button>
+        </div>
+      </div>
+    `).join('')
   }
 
-  async function doLogin() {
-    const username = document.getElementById('loginUser').value.trim()
-    const password = document.getElementById('loginPass').value
-    if (!username || !password) return showMsg('error', 'Please fill in all fields.')
-    setLoading('loginBtn', true)
+  async function loadFiles() {
+    document.getElementById('fileList').innerHTML = '<div class="empty"><div class="empty-icon">⏳</div><p>Loading...</p></div>'
     try {
-      const res = await fetch(API_LOGIN, {
+      const res = await fetch(API_FILES)
+      const data = await res.json()
+      if (data.ok) {
+        files = data.files || []
+        renderFiles()
+      } else {
+        showToast('error', 'Failed to load files: ' + (data.error || 'unknown error'))
+        document.getElementById('fileList').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><p>Could not load files</p></div>'
+      }
+    } catch(e) {
+      showToast('error', 'Network error')
+      document.getElementById('fileList').innerHTML = '<div class="empty"><div class="empty-icon">⚠️</div><p>Network error</p></div>'
+    }
+  }
+
+  async function uploadFiles(fileList) {
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i]
+      setProgress(true, 'Uploading ' + file.name + '... (' + (i+1) + '/' + fileList.length + ')', 30)
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('filename', file.name)
+      formData.append('filesize', file.size)
+      try {
+        const res = await fetch(API_UPLOAD, { method: 'POST', body: formData })
+        const data = await res.json()
+        if (data.ok) {
+          files.push(data.file)
+          renderFiles()
+          setProgress(true, '✅ ' + file.name + ' uploaded', 100)
+          showToast('success', file.name + ' uploaded')
+        } else {
+          setProgress(true, '❌ ' + (data.error || 'Upload failed'), 0)
+          showToast('error', data.error || 'Upload failed')
+        }
+      } catch(e) {
+        setProgress(true, '❌ Network error', 0)
+        showToast('error', 'Network error during upload')
+      }
+      await new Promise(r => setTimeout(r, 600))
+    }
+    setTimeout(() => setProgress(false), 2000)
+    document.getElementById('fileInput').value = ''
+  }
+
+  function setProgress(show, text, pct) {
+    const el = document.getElementById('uploadProgress')
+    el.style.display = show ? 'block' : 'none'
+    if (show) {
+      document.getElementById('progressInner').style.width = pct + '%'
+      document.getElementById('uploadStatus').textContent = text
+    }
+  }
+
+  async function deleteFile(fileId, name) {
+    if (!confirm('Delete "' + name + '"?')) return
+    try {
+      const res = await fetch(API_DELETE, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ file_id: fileId })
       })
       const data = await res.json()
       if (data.ok) {
-        localStorage.setItem('dc_token', data.token)
-        localStorage.setItem('dc_username', data.username)
-        showMsg('success', 'Login successful! Redirecting...')
-        setTimeout(() => window.location.href = 'dashboard.html', 600)
+        files = files.filter(f => f.file_id !== fileId)
+        renderFiles()
+        showToast('success', '"' + name + '" deleted')
       } else {
-        showMsg('error', data.error || 'Login failed.')
-        setLoading('loginBtn', false)
+        showToast('error', data.error || 'Delete failed')
       }
     } catch(e) {
-      showMsg('error', 'Network error. Please try again.')
-      setLoading('loginBtn', false)
+      showToast('error', 'Network error')
     }
   }
 
-  async function doRegister() {
-    const username = document.getElementById('regUser').value.trim()
-    const password = document.getElementById('regPass').value
-    const password2 = document.getElementById('regPass2').value
-    if (!username || !password || !password2) return showMsg('error', 'Please fill in all fields.')
-    if (password !== password2) return showMsg('error', 'Passwords do not match.')
-    if (username.length < 3) return showMsg('error', 'Username must be at least 3 characters.')
-    if (password.length < 6) return showMsg('error', 'Password must be at least 6 characters.')
-    setLoading('registerBtn', true)
-    try {
-      const res = await fetch(API_REGISTER, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      })
-      const data = await res.json()
-      if (data.ok) {
-        showMsg('success', 'Account created! You can now log in.')
-        setTimeout(() => showTab('login'), 1500)
-      } else {
-        showMsg('error', data.error || 'Registration failed.')
-      }
-    } catch(e) {
-      showMsg('error', 'Network error. Please try again.')
-    }
-    setLoading('registerBtn', false)
+  function onDrag(e, on) {
+    e.preventDefault()
+    document.getElementById('dropZone').classList.toggle('drag', on)
+  }
+  function onDrop(e) {
+    e.preventDefault()
+    onDrag(e, false)
+    uploadFiles(e.dataTransfer.files)
   }
 
-  // Enter key support
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Enter') {
-      if (!document.getElementById('loginForm').classList.contains('hidden')) doLogin()
-      else doRegister()
-    }
-  })
+  let toastTimer
+  function showToast(type, text) {
+    const t = document.getElementById('toast')
+    t.className = 'toast ' + type
+    t.textContent = text
+    clearTimeout(toastTimer)
+    requestAnimationFrame(() => t.classList.add('show'))
+    toastTimer = setTimeout(() => t.classList.remove('show'), 3000)
+  }
 </script>
 </body>
 </html>
