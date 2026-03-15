@@ -102,26 +102,27 @@
 </div>
 
 <div class="toast" id="toast"></div>
+<div id="debug" style="background:#1a1a1a;border:1px solid #333;margin:16px;padding:12px;border-radius:8px;font-size:0.7rem;word-break:break-all;color:#aaa"></div>
 
 <script>
-  // Read API URLs from query params (set by the bot in /start)
   const params = new URLSearchParams(window.location.search)
-  const API_FILES  = params.get('files')
-  const API_UPLOAD = params.get('upload')
-  const API_DELETE = params.get('del')
+  const API_FILES  = params.get("files")
+  const API_UPLOAD = params.get("upload")
+  const API_DELETE = params.get("del")
 
-  // Show no-link screen if URLs are missing
+  document.getElementById("debug").innerHTML =
+    "<b style='color:#4f8ef7'>DEBUG</b><br><br>" +
+    "<b>files:</b> " + API_FILES + "<br><br>" +
+    "<b>upload:</b> " + API_UPLOAD + "<br><br>" +
+    "<b>del:</b> " + API_DELETE
+
   if (!API_FILES || !API_UPLOAD || !API_DELETE) {
-    document.getElementById('nolinkScreen').style.display = 'flex'
+    document.getElementById("nolinkScreen").style.display = "flex"
   } else {
-    document.getElementById('app').style.display = 'block'
+    document.getElementById("app").style.display = "block"
     loadFiles()
   }
 
-  let files = []
-
-  function getIcon(name) {
-    const ext = (name.split('.').pop() || '').toLowerCase()
     if (['jpg','jpeg','png','gif','webp','svg','bmp'].includes(ext)) return '🖼️'
     if (['mp4','mov','avi','mkv','webm'].includes(ext)) return '🎬'
     if (['mp3','ogg','wav','flac','aac'].includes(ext)) return '🎵'
