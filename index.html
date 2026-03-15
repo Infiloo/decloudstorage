@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>decloud</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .container { width: 100%; max-width: 420px; padding: 24px; }
+    .logo { text-align: center; margin-bottom: 32px; }
+    .logo h1 { font-size: 2.5rem; color: #4f8ef7; font-weight: 800; letter-spacing: -1px; }
+    .logo p { color: #666; margin-top: 6px; font-size: 0.9rem; }
+    .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 16px; padding: 28px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+    .tab { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+    .tab.active { background: #4f8ef7; color: white; }
+    .tab.inactive { background: #222; color: #666; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; margin-bottom: 6px; font-size: 0.82rem; color: #666; letter-spacing: 0.3px; }
+    input { width: 100%; padding: 12px 14px; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; color: #e0e0e0; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+    input:focus { border-color: #4f8ef7; }
+    .btn { width: 100%; padding: 13px; background: #4f8ef7; color: white; border: none; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
+    .btn:hover { background: #3a7de8; }
+    .btn:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; }
+    .msg { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; font-size: 0.85rem; }
+    .msg.error { background: #2d1414; border: 1px solid #5a2020; color: #f87171; }
+    .msg.success { background: #142d14; border: 1px solid #205a20; color: #4ade80; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <h1>☁️ decloud</h1>
+    <p>Your personal Telegram cloud storage</p>
+  </div>
+  <div class="card">
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('login')">Login</button>
+      <button class="tab inactive" onclick="showTab('register')">Register</button>
+    </div>
+
+    <div id="msgBox" class="hidden"></div>
+
+    <!-- Login Form -->
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Username</label>
+        <input id="loginUser" type="text" placeholder="your username" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="loginPass" type="password" placeholder="your password" autocomplete="current-password" />
+      </div>
+      <button class="btn" id="loginBtn" onclick="doLogin()">Login</button>
+    </div>
+
+    <!-- Register Form -->
+    <div id="registerForm" class="hidden">
+      <div class="form-group">
+        <label>Username</label>
+        <input id="regUser" type="text" placeholder="choose a username" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input id="regPass" type="password" placeholder="at least 6 characters" autocomplete="new-password" />
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <input id="regPass2" type="password" placeholder="repeat password" autocomplete="new-password" />
+      </div>
+      <button class="btn" id="registerBtn" onclick="doRegister()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // CONFIG — paste your TBL webhook URLs here after setup
+  // ============================================================
+  const API_LOGIN    = "PASTE_LOGIN_WEBHOOK_URL_HERE"
+  const API_REGISTER = "PASTE_REGISTER_WEBHOOK_URL_HERE"
+  // ============================================================
+
+  // Redirect if already logged in
+  if (localStorage.getItem("dc_token")) {
+    window.location.href = "dashboard.html"
+  }
+
+  function showTab(tab) {
+    const isLogin = tab === 'login'
+    document.getElementById('loginForm').classList.toggle('hidden', !isLogin)
+    document.getElementById('registerForm').classList.toggle('hidden', isLogin)
+    document.querySelectorAll('.tab').forEach((t, i) => {
+      t.className = 'tab ' + ((isLogin && i === 0) || (!isLogin && i === 1) ? 'active' : 'inactive')
+    })
+    hideMsg()
+  }
+
+  function showMsg(type, text) {
+    const box = document.getElementById('msgBox')
+    box.className = 'msg ' + type
+    box.textContent = text
+  }
+
+  function hideMsg() {
+    document.getElementById('msgBox').className = 'hidden'
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId)
+    btn.disabled = loading
+    btn.textContent = loading ? 'Please wait...' : (btnId === 'loginBtn' ? 'Login' : 'Create Account')
+  }
+
+  async function doLogin() {
+    const username = document.getElementById('loginUser').value.trim()
+    const password = document.getElementById('loginPass').value
+    if (!username || !password) return showMsg('error', 'Please fill in all fields.')
+    setLoading('loginBtn', true)
+    try {
+      const res = await fetch(API_LOGIN, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      const data = await res.json()
+      if (data.ok) {
+        localStorage.setItem('dc_token', data.token)
+        localStorage.setItem('dc_username', data.username)
+        showMsg('success', 'Login successful! Redirecting...')
+        setTimeout(() => window.location.href = 'dashboard.html', 600)
+      } else {
+        showMsg('error', data.error || 'Login failed.')
+        setLoading('loginBtn', false)
+      }
+    } catch(e) {
+      showMsg('error', 'Network error. Please try again.')
+      setLoading('loginBtn', false)
+    }
+  }
+
+  async function doRegister() {
+    const username = document.getElementById('regUser').value.trim()
+    const password = document.getElementById('regPass').value
+    const password2 = document.getElementById('regPass2').value
+    if (!username || !password || !password2) return showMsg('error', 'Please fill in all fields.')
+    if (password !== password2) return showMsg('error', 'Passwords do not match.')
+    if (username.length < 3) return showMsg('error', 'Username must be at least 3 characters.')
+    if (password.length < 6) return showMsg('error', 'Password must be at least 6 characters.')
+    setLoading('registerBtn', true)
+    try {
+      const res = await fetch(API_REGISTER, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      })
+      const data = await res.json()
+      if (data.ok) {
+        showMsg('success', 'Account created! You can now log in.')
+        setTimeout(() => showTab('login'), 1500)
+      } else {
+        showMsg('error', data.error || 'Registration failed.')
+      }
+    } catch(e) {
+      showMsg('error', 'Network error. Please try again.')
+    }
+    setLoading('registerBtn', false)
+  }
+
+  // Enter key support
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      if (!document.getElementById('loginForm').classList.contains('hidden')) doLogin()
+      else doRegister()
+    }
+  })
+</script>
+</body>
+</html>
